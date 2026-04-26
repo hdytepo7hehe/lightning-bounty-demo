@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useTheme } from "@/components/ThemeProvider";
 
 export default function SettingsPage() {
+  const { theme, toggleTheme } = useTheme();
+
   return (
     <div className="space-y-6">
       <header className="flex items-baseline justify-between">
@@ -14,10 +17,16 @@ export default function SettingsPage() {
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">Appearance</h2>
-        <p className="text-sm opacity-70">
-          Theme preferences will appear here.
-        </p>
-        {/* TODO: add a dark mode toggle that uses useTheme() from components/ThemeProvider */}
+        <div className="flex items-center gap-4">
+          <span className="text-sm opacity-70">Current theme: {theme}</span>
+          <button
+            data-testid="dark-mode-toggle"
+            onClick={toggleTheme}
+            className="rounded px-4 py-2 text-sm font-medium border border-current hover:opacity-80 transition-opacity"
+          >
+            Switch to {theme === "light" ? "dark" : "light"} mode
+          </button>
+        </div>
       </section>
     </div>
   );
