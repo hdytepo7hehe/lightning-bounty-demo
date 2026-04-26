@@ -106,7 +106,37 @@ function performMigration(): void {
 }
 
 /**
+ * Read from IndexedDB asynchronously
+ */
+function readFromIndexedDB<T>(key: string): Promise<T | null> {
+  return new Promise((resolve) => {
+    if (!db || !useIndexedDB) {
+      resolve(null);
+      return;
+    }
+
+    try {
+      const transaction = db.transaction([STORE_NAME], "readonly");
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get(key);
+
+      request.onsuccess = () => {
+        const result = request.result;
+        resolve(result !== undefined ? result : null);
+      };
+
+      request.onerror = () => {
+        resolve(null);
+      };
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+/**
  * Read JSON from storage (IndexedDB or localStorage)
+ * Synchronous version - uses cache and localStorage
  */
 function readJSON<T>(key: string): T | null {
   if (!isBrowser()) return null;
@@ -116,7 +146,46 @@ function readJSON<T>(key: string): T | null {
     return cache.get(key) as T;
   }
 
-  // Fall back to localStorage (will be used until IndexedDB is ready)
+  // If IndexedDB is ready and migration is complete, prefer IndexedDB
+  // But since this is sync, we can only check localStorage
+  // IndexedDB reads happen in readJSONAsync
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as T;
+    cache.set(key, parsed);
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Read JSON from storage asynchronously with IndexedDB priority
+ * After migration is complete, reads from IndexedDB first, then localStorage
+ */
+export async function readJSONAsync<T>(key: string): Promise<T | null> {
+  if (!isBrowser()) return null;
+
+  // Check cache first
+  if (cache.has(key)) {
+    return cache.get(key) as T;
+  }
+
+  // Ensure IndexedDB is initialized
+  await initIndexedDB();
+
+  // If migration is complete and IndexedDB is available, prefer it
+  const migrationFlag = localStorage.getItem(MIGRATION_FLAG_KEY);
+  if (migrationFlag === "true" && useIndexedDB && indexedDBInitialized) {
+    const fromIDB = await readFromIndexedDB<T>(key);
+    if (fromIDB !== null) {
+      cache.set(key, fromIDB);
+      return fromIDB;
+    }
+  }
+
+  // Fall back to localStorage
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return null;
