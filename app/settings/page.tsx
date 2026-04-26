@@ -24,7 +24,7 @@ export default function SettingsPage() {
             onClick={toggleTheme}
             className="rounded px-4 py-2 text-sm font-medium border border-current hover:opacity-80 transition-opacity"
           >
-            {theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+            {theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           </button>
         </div>
       </section>
