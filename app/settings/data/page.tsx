@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/Button";
-import { exportRaw, clearAll } from "@/lib/storage";
-import { tasksToCSV, projectsToCSV } from "@/lib/csv";
+import { exportRaw, clearAll, saveTask, saveProject, getTasks, getProjects } from "@/lib/storage";
+import { tasksToCSV, projectsToCSV, parseTasksCSV, parseProjectsCSV } from "@/lib/csv";
 import { useToast } from "@/components/ui/ToastProvider";
 import { useRouter } from "next/navigation";
 
@@ -21,6 +21,9 @@ export default function DataPage() {
   const { showToast } = useToast();
   const router = useRouter();
   const [clearing, setClearing] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const tasksFileRef = useRef<HTMLInputElement>(null);
+  const projectsFileRef = useRef<HTMLInputElement>(null);
 
   function handleExportTasks() {
     const { projects, tasks } = exportRaw();
@@ -32,6 +35,87 @@ export default function DataPage() {
     const { projects } = exportRaw();
     downloadCSV(projectsToCSV(projects), "project-tracker-projects.csv");
     showToast("Projects exported as CSV", "success");
+  }
+
+  function handleImportTasks() {
+    const file = tasksFileRef.current?.files?.[0];
+    if (!file) return;
+    setImporting(true);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const csv = e.target?.result as string;
+        const { tasks, errors } = parseTasksCSV(csv);
+
+        if (errors.length > 0) {
+          // Show toast with first error, but still import valid rows
+          showToast(`Skipped ${errors.length} malformed row(s)`, "warning");
+        }
+
+        // Import valid tasks
+        let imported = 0;
+        for (const task of tasks) {
+          if (task.id && task.projectId && task.title) {
+            saveTask(task as any);
+            imported++;
+          }
+        }
+
+        if (imported > 0) {
+          showToast(`Imported ${imported} task(s)`, "success");
+          setTimeout(() => router.refresh(), 500);
+        } else {
+          showToast("No valid tasks to import", "warning");
+        }
+      } catch (error) {
+        showToast("Failed to parse CSV file", "error");
+      } finally {
+        setImporting(false);
+        if (tasksFileRef.current) tasksFileRef.current.value = "";
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function handleImportProjects() {
+    const file = projectsFileRef.current?.files?.[0];
+    if (!file) return;
+    setImporting(true);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const csv = e.target?.result as string;
+        const { projects, errors } = parseProjectsCSV(csv);
+
+        if (errors.length > 0) {
+          showToast(`Skipped ${errors.length} malformed row(s)`, "warning");
+        }
+
+        // Import valid projects
+        let imported = 0;
+        for (const project of projects) {
+          if (project.id && project.name) {
+            saveProject(project as any);
+            imported++;
+          }
+        }
+
+        if (imported > 0) {
+          showToast(`Imported ${imported} project(s)`, "success");
+          setTimeout(() => router.refresh(), 500);
+        } else {
+          showToast("No valid projects to import", "warning");
+        }
+      } catch (error) {
+        showToast("Failed to parse CSV file", "error");
+      } finally {
+        setImporting(false);
+        if (projectsFileRef.current) projectsFileRef.current.value = "";
+      }
+    };
+    reader.readAsText(file);
   }
 
   function handleClear() {
@@ -68,8 +152,64 @@ export default function DataPage() {
               Export
             </Button>
           </div>
-          {/* No CSV import — bounty gap #3 */}
-          <p className="text-xs text-[--text-muted] font-mono pt-1">CSV import not yet supported</p>
+        </div>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="font-mono text-xs uppercase tracking-widest text-[--text-muted] mb-3">Import</h2>
+        <div className="border border-[--border] bg-[--surface] p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-[--text]">Import tasks from CSV</p>
+              <p className="text-xs text-[--text-muted]">Matches export format; malformed rows are skipped</p>
+            </div>
+            <div className="flex gap-2 items-center">
+              <input
+                ref={tasksFileRef}
+                type="file"
+                accept=".csv"
+                onChange={handleImportTasks}
+                disabled={importing}
+                className="hidden"
+                aria-label="Select tasks CSV file"
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => tasksFileRef.current?.click()}
+                disabled={importing}
+                aria-label="Import tasks CSV"
+              >
+                {importing ? "Importing..." : "Import"}
+              </Button>
+            </div>
+          </div>
+          <div className="flex items-center justify-between border-t border-[--border] pt-3">
+            <div>
+              <p className="text-sm font-medium text-[--text]">Import projects from CSV</p>
+              <p className="text-xs text-[--text-muted]">Matches export format; malformed rows are skipped</p>
+            </div>
+            <div className="flex gap-2 items-center">
+              <input
+                ref={projectsFileRef}
+                type="file"
+                accept=".csv"
+                onChange={handleImportProjects}
+                disabled={importing}
+                className="hidden"
+                aria-label="Select projects CSV file"
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => projectsFileRef.current?.click()}
+                disabled={importing}
+                aria-label="Import projects CSV"
+              >
+                {importing ? "Importing..." : "Import"}
+              </Button>
+            </div>
+          </div>
         </div>
       </section>
 
