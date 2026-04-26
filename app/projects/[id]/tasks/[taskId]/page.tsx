@@ -10,6 +10,7 @@ import { TagBadge } from "@/components/tags/TagBadge";
 import { Modal } from "@/components/ui/Modal";
 import { TaskForm } from "@/components/tasks/TaskForm";
 import { Button } from "@/components/ui/Button";
+import { PomodoroTimer } from "@/components/tasks/PomodoroTimer";
 import { getTask, getProject, saveTask, deleteTask } from "@/lib/storage";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { Task, Project } from "@/lib/types";
@@ -133,6 +134,8 @@ export default function TaskDetailPage() {
             </div>
           </dl>
         </div>
+
+        <PomodoroTimer taskId={taskId} />
       </main>
 
       <Modal open={showEditModal} onClose={() => setShowEditModal(false)} title="Edit Task">
