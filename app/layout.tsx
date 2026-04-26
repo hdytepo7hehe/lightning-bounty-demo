@@ -1,19 +1,26 @@
-import type { ReactNode } from "react";
-import { ThemeProvider } from "@/components/ThemeProvider";
+import type { Metadata } from "next";
 import "./globals.css";
+import { ToastProvider } from "@/components/ui/ToastProvider";
+import { SkipLink } from "@/components/ui/SkipLink";
+import { AuthGuard } from "@/components/AuthGuard";
 
-export const metadata = {
-  title: "Todo App",
-  description: "Demo todo app for Lightning Bounty Marketplace",
+export const metadata: Metadata = {
+  title: "Project Tracker",
+  description: "Manage projects and tasks — Lightning Bounties demo",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en" data-theme="light">
-      <body className="min-h-screen font-sans">
-        <ThemeProvider>
-          <main className="mx-auto max-w-xl px-6 py-10">{children}</main>
-        </ThemeProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <SkipLink />
+        <ToastProvider>
+          <AuthGuard>{children}</AuthGuard>
+        </ToastProvider>
       </body>
     </html>
   );
