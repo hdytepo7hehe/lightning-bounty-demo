@@ -6,7 +6,7 @@ import { TaskItem } from "./TaskItem";
 import { searchTasks } from "@/lib/search";
 import { filterTasks } from "@/lib/filters";
 import { sortTasks } from "@/lib/sort";
-import { saveTask } from "@/lib/storage";
+import { saveTask, deleteTask } from "@/lib/storage";
 import { SearchBar } from "@/components/ui/SearchBar";
 
 interface TaskListProps {
@@ -63,6 +63,7 @@ export function TaskList({ tasks, projectId, onDelete }: TaskListProps) {
   function handleDeleteSelected() {
     const selectedTasks = tasks.filter((t) => selectedIds.has(t.id));
     selectedTasks.forEach((task) => {
+      deleteTask(task.id);
       if (onDelete) onDelete(task.id);
     });
     setSelectedIds(new Set());
