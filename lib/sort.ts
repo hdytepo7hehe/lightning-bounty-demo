@@ -28,6 +28,15 @@ export function sortTasks(tasks: Task[], config: SortConfig): Task[] {
   });
 }
 
+export function reorderTasks(tasks: Task[], fromIndex: number, toIndex: number): Task[] {
+  const result = [...tasks];
+  const [moved] = result.splice(fromIndex, 1);
+  result.splice(toIndex, 0, moved);
+  
+  // Update order numbers
+  return result.map((task, index) => ({ ...task, order: index }));
+}
+
 export function sortProjects(projects: Project[], config: SortConfig): Project[] {
   return [...projects].sort((a, b) => {
     let cmp = 0;

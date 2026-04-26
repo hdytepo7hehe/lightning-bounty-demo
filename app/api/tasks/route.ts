@@ -17,7 +17,15 @@ export async function POST(req: NextRequest) {
 
   const data = body as Omit<Task, "id" | "createdAt" | "updatedAt">;
   const now = new Date().toISOString();
-  const task: Task = { ...data, id: `task-${Date.now()}`, createdAt: now, updatedAt: now };
+  const projectId = (data as any).projectId;
+  
+  // Calculate next order number
+  const existingTasks = getTasks(projectId);
+  const nextOrder = existingTasks.length > 0 
+    ? Math.max(...existingTasks.map(t => t.order)) + 1
+    : 0;
+  
+  const task: Task = { ...data, id: `task-${Date.now()}`, order: nextOrder, createdAt: now, updatedAt: now };
   saveTask(task);
   return Response.json(task, { status: 201 });
 }

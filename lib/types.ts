@@ -18,6 +18,7 @@ export interface Task {
   tags: Tag[];
   assignee: string;
   dueDate: string | null;
+  order: number;
   createdAt: string;
   updatedAt: string;
 }
