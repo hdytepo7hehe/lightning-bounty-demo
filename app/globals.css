@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root,
+[data-theme="light"] {
+  --color-bg: #fafaf7;
+  --color-fg: #1a1a1a;
+  --color-accent: #e85d04;
+}
+
+[data-theme="dark"] {
+  --color-bg: #0f0f10;
+  --color-fg: #f3f3f0;
+  --color-accent: #ffb703;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  transition: background-color 200ms ease, color 200ms ease;
+}
