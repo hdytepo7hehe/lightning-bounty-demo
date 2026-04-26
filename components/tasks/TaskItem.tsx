@@ -9,6 +9,8 @@ interface TaskItemProps {
   task: Task;
   projectId: string;
   onDelete?: (id: string) => void;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string, selected: boolean) => void;
 }
 
 const priorityDot: Record<string, string> = {
@@ -17,9 +19,23 @@ const priorityDot: Record<string, string> = {
   low: "bg-zinc-400",
 };
 
-export function TaskItem({ task, projectId, onDelete }: TaskItemProps) {
+export function TaskItem({ task, projectId, onDelete, isSelected, onToggleSelect }: TaskItemProps) {
   return (
-    <div className="border border-[--border] bg-[--surface] px-4 py-3 flex items-start gap-3 group hover:border-[--accent] transition-colors">
+    <div className={`border px-4 py-3 flex items-start gap-3 group transition-colors ${
+      isSelected
+        ? 'border-[--accent] bg-[--accent] bg-opacity-10'
+        : 'border-[--border] bg-[--surface] hover:border-[--accent]'
+    }`}>
+      {/* Checkbox for multi-select */}
+      {onToggleSelect && (
+        <input
+          type="checkbox"
+          checked={isSelected ?? false}
+          onChange={(e) => onToggleSelect(task.id, e.target.checked)}
+          className="mt-1.5 w-4 h-4 accent-[--accent] cursor-pointer shrink-0"
+          aria-label={`Select task ${task.title}`}
+        />
+      )}
       {/* Priority indicator */}
       <span
         className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${priorityDot[task.priority]}`}
